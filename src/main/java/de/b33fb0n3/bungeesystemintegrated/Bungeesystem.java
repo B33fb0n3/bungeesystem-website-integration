@@ -1,12 +1,16 @@
 package de.b33fb0n3.bungeesystemintegrated;
 
+import de.b33fb0n3.bungeesystemintegrated.utils.ConnectionPoolFactory;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
+import net.md_5.bungee.config.ConfigurationProvider;
+import net.md_5.bungee.config.YamlConfiguration;
 
 import javax.sql.DataSource;
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,15 +35,57 @@ public final class Bungeesystem extends Plugin {
         return plugin;
     }
 
+    private DataSource dataSource;
+    public static Configuration mysqlConfig;
+
     @Override
     public void onEnable() {
         plugin = this;
         getLogger().info("[]=======================[]");
         getLogger().info("						 ");
         getLogger().info("Coded by: B33fb0n3YT");
+
+        ConnectionPoolFactory connectionPool = new ConnectionPoolFactory(mysqlConfig);
+
+        // mysql connect
+        try {
+            dataSource = connectionPool.getPluginDataSource(this);
+        } catch (SQLException e) {
+            logger().log(Level.SEVERE, "Could not create data source.", e);
+            getProxy().getPluginManager().unregisterListeners(this);
+            getProxy().getPluginManager().unregisterCommands(this);
+            onDisable();
+            return;
+        }
+
         getLogger().info("Bungeesystem wurde aktiviert!");
         getLogger().info("						 ");
         getLogger().info("[]=======================[]");
+    }
+
+    private void loadConfig() {
+        try {
+            if (!getDataFolder().exists()) {
+                getDataFolder().mkdir();
+            }
+            File mysqlFile = new File(getDataFolder().getPath(), "mysql.yml");
+            if (!mysqlFile.exists()) {
+                mysqlFile.createNewFile();
+                mysqlConfig = ConfigurationProvider.getProvider(YamlConfiguration.class).load(mysqlFile);
+
+                mysqlConfig.set("host", "localhost");
+                mysqlConfig.set("port", 3306);
+                mysqlConfig.set("datenbank", "DEINEDATENBANK");
+                mysqlConfig.set("username", "DEINBENUTZERNAME");
+                mysqlConfig.set("passwort", "DEINPASSWORT");
+                ConfigurationProvider.getProvider(YamlConfiguration.class).save(mysqlConfig, mysqlFile);
+            }
+            mysqlConfig = ConfigurationProvider.getProvider(YamlConfiguration.class).load(mysqlFile);
+        } catch (IOException | NullPointerException e) {
+            getLogger().log(Level.WARNING, "failed to create config", e);
+        }
+
+        getLogger().info("Configs geladen!");
     }
 
     @Override
