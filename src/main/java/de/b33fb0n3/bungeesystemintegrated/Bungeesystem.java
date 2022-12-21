@@ -7,6 +7,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
+import org.bstats.bungeecord.Metrics;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -41,9 +42,14 @@ public final class Bungeesystem extends Plugin {
     @Override
     public void onEnable() {
         plugin = this;
+
+        Metrics metrics = new Metrics(this, 4628);
+
         getLogger().info("[]=======================[]");
         getLogger().info("						 ");
         getLogger().info("Coded by: B33fb0n3YT");
+
+        loadConfig();
 
         ConnectionPoolFactory connectionPool = new ConnectionPoolFactory(mysqlConfig);
 
