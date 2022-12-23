@@ -1,6 +1,7 @@
 package de.b33fb0n3.bungeesystemintegrated;
 
 import de.b33fb0n3.bungeesystemintegrated.utils.ConnectionPoolFactory;
+import de.b33fb0n3.bungeesystemintegrated.utils.Updater;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -38,6 +39,7 @@ public final class Bungeesystem extends Plugin {
 
     private DataSource dataSource;
     public static Configuration mysqlConfig;
+    private Updater updater;
 
     @Override
     public void onEnable() {
@@ -62,6 +64,18 @@ public final class Bungeesystem extends Plugin {
             getProxy().getPluginManager().unregisterCommands(this);
             onDisable();
             return;
+        }
+
+        // check update
+        updater = new Updater(this);
+        int checkUpdate = updater.ckeckUpdate();
+        if (checkUpdate == 0) {
+            getLogger().info("§7Du bist auf der neusten Version!");
+        } else if (checkUpdate == 1) {
+            getLogger().info("§aEine neue Version hier verfügbar: \n§bhttps://www.spigotmc.org/resources/51783/updates");
+            updater.setUpdate(true);
+        } else {
+            getLogger().info("§cUpdater konnte keine Verbingung herstellen §7(§cmögl. Dev Build§7)");
         }
 
         getLogger().info("Bungeesystem wurde aktiviert!");
