@@ -1,8 +1,10 @@
 package de.b33fb0n3.bungeesystemintegrated;
 
+import de.b33fb0n3.bungeesystemintegrated.listener.Login;
 import de.b33fb0n3.bungeesystemintegrated.utils.ConnectionPoolFactory;
 import de.b33fb0n3.bungeesystemintegrated.utils.Updater;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
@@ -13,6 +15,8 @@ import org.bstats.bungeecord.Metrics;
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +32,13 @@ public final class Bungeesystem extends Plugin {
     private static Bungeesystem plugin;
     public static String Prefix = "§bB33fb0n3§4.net §7| §a";
     public static String noPerm = Prefix + "§cDazu hast du keine Rechte!";
+    public static String normal = "&a";
+    public static String fehler = "&c";
+    public static String herH = "&b";
+    public static String other = "&e";
+    public static String other2 = "&7";
+    public static String helpMessage = "";
+    public static Configuration settings;
 
     public static Logger logger() {
         return plugin.getLogger();
@@ -78,9 +89,45 @@ public final class Bungeesystem extends Plugin {
             getLogger().info("§cUpdater konnte keine Verbingung herstellen §7(§cmögl. Dev Build§7)");
         }
 
+        // load color codes from config
+        try {
+            normal = settings.getString("ChatColor.normal").replace("&", "§");
+            fehler = settings.getString("ChatColor.fehler").replace("&", "§");
+            herH = settings.getString("ChatColor.hervorhebung").replace("&", "§");
+            other = settings.getString("ChatColor.other").replace("&", "§");
+            other2 = settings.getString("ChatColor.other2").replace("&", "§");
+
+            Prefix = settings.getString("Prefix").replace("&", "§") + normal;
+            noPerm = settings.getString("NoPerm").replace("&", "§");
+            helpMessage = ChatColor.translateAlternateColorCodes('&', Prefix + fehler + "Benutze: " + other + "/bhelp %begriff% oder " + other + "/bhelp");
+        } catch (NullPointerException e) {
+            getLogger().log(Level.WARNING, "Some messages not found!", e);
+        }
+
         getLogger().info("Bungeesystem wurde aktiviert!");
         getLogger().info("						 ");
         getLogger().info("[]=======================[]");
+        registerCommands();
+        registerListener();
+        initMySQL();
+    }
+
+    private void registerCommands() {
+        ProxyServer.getInstance().getPluginManager().registerListener(this, new Login(this, dataSource, settings));
+    }
+
+    private void registerListener() {
+
+    }
+
+    private void initMySQL() {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement("CREATE TABLE IF NOT EXISTS bannedPlayers (TargetUUID VARCHAR(64) NOT NULL,TargetName VARCHAR(64),VonUUID VARCHAR(64) NOT NULL,VonName VARCHAR(64),Grund VARCHAR(100) NOT NULL,TimeStamp BIGINT NOT NULL,Bis VARCHAR(100) NOT NULL,Perma TINYINT(1) NOT NULL,Ban TINYINT(1) NOT NULL, ip VARCHAR(100), baneditiertvon VARCHAR(36), beweis VARCHAR(200))");
+        ) {
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            logger().log(Level.WARNING, "Could not establish database connection.", e);
+        }
     }
 
     private void loadConfig() {
@@ -89,6 +136,7 @@ public final class Bungeesystem extends Plugin {
                 getDataFolder().mkdir();
             }
             File mysqlFile = new File(getDataFolder().getPath(), "mysql.yml");
+            File settingsFile = new File(getDataFolder().getPath(), "settings.yml");
             if (!mysqlFile.exists()) {
                 mysqlFile.createNewFile();
                 mysqlConfig = ConfigurationProvider.getProvider(YamlConfiguration.class).load(mysqlFile);
@@ -101,6 +149,22 @@ public final class Bungeesystem extends Plugin {
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(mysqlConfig, mysqlFile);
             }
             mysqlConfig = ConfigurationProvider.getProvider(YamlConfiguration.class).load(mysqlFile);
+
+            if (!settingsFile.exists() || settingsFile == null) {
+                settingsFile.createNewFile();
+                settings = ConfigurationProvider.getProvider(YamlConfiguration.class).load(settingsFile);
+
+                settings.set("Prefix", "&bB33fb0n3&4.net &7| &a");
+                settings.set("NoPerm", "&cDazu hast du keine Rechte!");
+
+                settings.set("ChatColor.normal", "&a");
+                settings.set("ChatColor.fehler", "&4");
+                settings.set("ChatColor.hervorhebung", "&b");
+                settings.set("ChatColor.other", "&e");
+                settings.set("ChatColor.other2", "&7");
+                ConfigurationProvider.getProvider(YamlConfiguration.class).save(settings, settingsFile);
+            }
+            settings = ConfigurationProvider.getProvider(YamlConfiguration.class).load(settingsFile);
         } catch (IOException | NullPointerException e) {
             getLogger().log(Level.WARNING, "failed to create config", e);
         }
