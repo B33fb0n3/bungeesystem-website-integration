@@ -3,3 +3,6 @@ version: ${project.version}
 author: B33fb0n3YT
 description: ${project.description}
 main: ${project.mainClass}
+commands:
+  ban:
+    description: Banne Spieler

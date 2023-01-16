@@ -1,5 +1,6 @@
 package de.b33fb0n3.bungeesystemintegrated;
 
+import de.b33fb0n3.bungeesystemintegrated.commands.Ban;
 import de.b33fb0n3.bungeesystemintegrated.listener.Login;
 import de.b33fb0n3.bungeesystemintegrated.utils.ConnectionPoolFactory;
 import de.b33fb0n3.bungeesystemintegrated.utils.Updater;
@@ -39,6 +40,7 @@ public final class Bungeesystem extends Plugin {
     public static String other2 = "&7";
     public static String helpMessage = "";
     public static Configuration settings;
+    public ExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadExecutor();
 
     public static Logger logger() {
         return plugin.getLogger();
@@ -113,11 +115,11 @@ public final class Bungeesystem extends Plugin {
     }
 
     private void registerCommands() {
-        ProxyServer.getInstance().getPluginManager().registerListener(this, new Login(this, dataSource, settings));
+        ProxyServer.getInstance().getPluginManager().registerCommand(this, new Ban("ban"));
     }
 
     private void registerListener() {
-
+        ProxyServer.getInstance().getPluginManager().registerListener(this, new Login(this, dataSource, settings));
     }
 
     private void initMySQL() {
