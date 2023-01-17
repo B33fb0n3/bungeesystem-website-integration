@@ -19,6 +19,10 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -130,6 +134,12 @@ public final class Bungeesystem extends Plugin {
         } catch (SQLException e) {
             logger().log(Level.WARNING, "Could not establish database connection.", e);
         }
+    }
+
+    public static String formatTime(Long timestamp) {
+        LocalDateTime date = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.of("Europe/Berlin"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm");
+        return date.format(formatter) + " Uhr";
     }
 
     private void loadConfig() {
