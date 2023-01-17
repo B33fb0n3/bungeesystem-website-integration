@@ -12,10 +12,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.mainClass>de.b33fb0n3.bungeesystem.Bungeesystem</project.mainClass>
+        <project.mainClass>de.b33fb0n3.bungeesystemintegrated</project.mainClass>
         <javadoc.version>3.2.0</javadoc.version>
         <source.version>3.2.1</source.version>
-        <shadebase>de.b33fb0n3.bungeesystem.</shadebase>
+        <shadebase>de.b33fb0n3.bungeesystemintegrated.</shadebase>
         <maven.compiler.target>16</maven.compiler.target>
         <maven.compiler.source>16</maven.compiler.source>
     </properties>
