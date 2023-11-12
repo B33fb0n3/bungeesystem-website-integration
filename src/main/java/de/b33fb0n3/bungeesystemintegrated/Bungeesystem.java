@@ -57,6 +57,8 @@ public final class Bungeesystem extends Plugin {
     private DataSource dataSource;
     public static Configuration mysqlConfig;
     private Updater updater;
+    public static Configuration ban;
+    public static File banFile;
 
     @Override
     public void onEnable() {
@@ -177,6 +179,28 @@ public final class Bungeesystem extends Plugin {
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(settings, settingsFile);
             }
             settings = ConfigurationProvider.getProvider(YamlConfiguration.class).load(settingsFile);
+
+            if (!banFile.exists() || banFile == null) {
+                banFile.createNewFile();
+                ban = ConfigurationProvider.getProvider(YamlConfiguration.class).load(banFile);
+
+                ban.set("BanIDs.1.Reason", "Clientmodifikation");
+                ban.set("BanIDs.1.Time", 6);
+                ban.set("BanIDs.1.Format", "HOUR");
+                ban.set("BanIDs.1.Ban", true);
+                ban.set("BanIDs.1.Perma", true);
+                ban.set("BanIDs.1.Reportable", true);
+
+                ban.set("BanIDs.2.Reason", "Chatverhalten");
+                ban.set("BanIDs.2.Time", 3);
+                ban.set("BanIDs.2.Format", "HOUR");
+                ban.set("BanIDs.2.Ban", false);
+                ban.set("BanIDs.2.Perma", false);
+                ban.set("BanIDs.2.Reportable", true);
+
+                ConfigurationProvider.getProvider(YamlConfiguration.class).save(ban, banFile);
+            }
+            ban = ConfigurationProvider.getProvider(YamlConfiguration.class).load(banFile);
         } catch (IOException | NullPointerException e) {
             getLogger().log(Level.WARNING, "failed to create config", e);
         }
