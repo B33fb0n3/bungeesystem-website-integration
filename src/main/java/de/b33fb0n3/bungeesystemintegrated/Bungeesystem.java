@@ -59,6 +59,7 @@ public final class Bungeesystem extends Plugin {
     private Updater updater;
     public static Configuration ban;
     public static File banFile;
+    public static Configuration raenge;
 
     @Override
     public void onEnable() {
@@ -138,6 +139,10 @@ public final class Bungeesystem extends Plugin {
         }
     }
 
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+
     public static String formatTime(Long timestamp) {
         LocalDateTime date = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.of("Europe/Berlin"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm");
@@ -151,6 +156,8 @@ public final class Bungeesystem extends Plugin {
             }
             File mysqlFile = new File(getDataFolder().getPath(), "mysql.yml");
             File settingsFile = new File(getDataFolder().getPath(), "settings.yml");
+            File raengeFile = new File(getDataFolder().getPath(), "raenge.yml");
+
             if (!mysqlFile.exists()) {
                 mysqlFile.createNewFile();
                 mysqlConfig = ConfigurationProvider.getProvider(YamlConfiguration.class).load(mysqlFile);
@@ -201,6 +208,31 @@ public final class Bungeesystem extends Plugin {
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(ban, banFile);
             }
             ban = ConfigurationProvider.getProvider(YamlConfiguration.class).load(banFile);
+
+            if (!raengeFile.exists()) {
+                raengeFile.createNewFile();
+                raenge = ConfigurationProvider.getProvider(YamlConfiguration.class).load(raengeFile);
+
+                raenge.set("Raenge.Owner.Power", 100);
+                raenge.set("Raenge.Owner.Permission", "bungeecord.banreport.owner");
+                raenge.set("Raenge.Admin.Power", 70);
+                raenge.set("Raenge.Admin.Permission", "bungeecord.banreport.admin");
+                raenge.set("Raenge.Dev.Power", 60);
+                raenge.set("Raenge.Dev.Permission", "bungeecord.banreport.dev");
+                raenge.set("Raenge.Mod.Power", 50);
+                raenge.set("Raenge.Mod.Permission", "bungeecord.banreport.mod");
+                raenge.set("Raenge.Sup.Power", 40);
+                raenge.set("Raenge.Sup.Permission", "bungeecord.banreport.sup");
+                raenge.set("Raenge.Builder.Power", 30);
+                raenge.set("Raenge.Builder.Permission", "bungeecord.banreport.builder");
+                raenge.set("Raenge.Youtuber.Power", 20);
+                raenge.set("Raenge.Youtuber.Permission", "bungeecord.banreport.youtuber");
+                raenge.set("Raenge.Premium.Power", 10);
+                raenge.set("Raenge.Premium.Permission", "bungeecord.banreport.premium");
+                raenge.set("Raenge.default.Power", 0);
+                ConfigurationProvider.getProvider(YamlConfiguration.class).save(raenge, raengeFile);
+            }
+            raenge = ConfigurationProvider.getProvider(YamlConfiguration.class).load(raengeFile);
         } catch (IOException | NullPointerException e) {
             getLogger().log(Level.WARNING, "failed to create config", e);
         }

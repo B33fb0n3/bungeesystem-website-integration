@@ -1,10 +1,12 @@
 package de.b33fb0n3.bungeesystemintegrated.commands;
 
 import de.b33fb0n3.bungeesystemintegrated.Bungeesystem;
+import de.b33fb0n3.bungeesystemintegrated.utils.RangManager;
 import de.b33fb0n3.bungeesystemintegrated.utils.UUIDFetcher;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
 import java.util.ArrayList;
@@ -31,7 +33,17 @@ public class Ban extends Command {
                     return;
                 }
 
-                // TODO weitermachen
+                if (Bungeesystem.settings.getBoolean("Toggler.power")) {
+                    if (sender instanceof ProxiedPlayer) {
+                        ProxiedPlayer pp = (ProxiedPlayer) sender;
+                        RangManager rangManager = new RangManager(pp, Bungeesystem.getPlugin().getDataSource());
+                        if (!(rangManager.getPower(pp.getUniqueId()) > rangManager.getPower(ptUUID))) {
+                            pp.sendMessage(new TextComponent(Bungeesystem.Prefix + Bungeesystem.fehler + "Diesen Spieler darfst du nicht bannen!"));
+                            return;
+                        }
+                    }
+                }
+
             } else {
                 if (Bungeesystem.settings.getBoolean("BanPlaceholder.aktive"))
                     sendBans(sender);
