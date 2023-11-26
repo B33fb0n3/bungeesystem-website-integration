@@ -60,6 +60,8 @@ public final class Bungeesystem extends Plugin {
     public static Configuration ban;
     public static File banFile;
     public static Configuration raenge;
+    public static Configuration standardBans;
+    public static File standardBansFile;
 
     @Override
     public void onEnable() {
@@ -233,6 +235,31 @@ public final class Bungeesystem extends Plugin {
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(raenge, raengeFile);
             }
             raenge = ConfigurationProvider.getProvider(YamlConfiguration.class).load(raengeFile);
+
+            if (!standardBansFile.exists()) {
+                standardBansFile.createNewFile();
+                standardBans = ConfigurationProvider.getProvider(YamlConfiguration.class).load(standardBansFile);
+
+                standardBans.set("BanIDs.1.Reason", "Alt-Account");
+                standardBans.set("BanIDs.1.Time", 10);
+                standardBans.set("BanIDs.1.Format", "HOUR");
+                standardBans.set("BanIDs.1.Ban", true);
+                standardBans.set("BanIDs.1.Perma", true);
+
+                standardBans.set("BanIDs.2.Reason", "Chatverhalten");
+                standardBans.set("BanIDs.2.Time", 1);
+                standardBans.set("BanIDs.2.Format", "MON");
+                standardBans.set("BanIDs.2.Ban", false);
+                standardBans.set("BanIDs.2.Perma", false);
+
+                standardBans.set("BanIDs.3.Reason", "Warnungen");
+                standardBans.set("BanIDs.3.Time", 3);
+                standardBans.set("BanIDs.3.Format", "MON");
+                standardBans.set("BanIDs.3.Ban", true);
+                standardBans.set("BanIDs.3.Perma", false);
+                ConfigurationProvider.getProvider(YamlConfiguration.class).save(standardBans, standardBansFile);
+            }
+            standardBans = ConfigurationProvider.getProvider(YamlConfiguration.class).load(standardBansFile);
         } catch (IOException | NullPointerException e) {
             getLogger().log(Level.WARNING, "failed to create config", e);
         }

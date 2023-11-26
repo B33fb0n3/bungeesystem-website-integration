@@ -12,6 +12,7 @@ import net.md_5.bungee.config.Configuration;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -50,6 +51,38 @@ public class Ban {
         this.standardBans = standardBans;
 
         this.createBan();
+    }
+
+    public Ban(UUID uuid, String ip, DataSource source, Configuration settings, Configuration standardBans) {
+        this.source = source;
+        this.settings = settings;
+        this.standardBans = standardBans;
+
+        this.setTargetUUID(uuid);
+        this.setIp(ip == null ? "0" : ip);
+        String sql = "SELECT * FROM bannedPlayers WHERE TargetUUID = ?";
+        if (ip != null) {
+            sql = "SELECT * FROM bannedPlayers WHERE ip LIKE '%" + this.getIp() + "%' OR TargetUUID = ?";
+        }
+        try (Connection conn = getSource().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, String.valueOf(this.getTargetUUID()));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                this.setVonName(rs.getString("VonName"));
+                this.setBan(rs.getInt("Ban"));
+                this.setBis(rs.getLong("Bis"));
+                this.setErstellt(rs.getLong("TimeStamp"));
+                this.setGrund(rs.getString("Grund"));
+                this.setPerma(rs.getInt("perma"));
+                this.setTargetUUID(UUID.fromString(rs.getString("TargetUUID")));
+                this.setIp(rs.getString("ip"));
+                this.setEditBy(rs.getString("baneditiertvon") == null ? "Keiner" : rs.getString("baneditiertvon"));
+                this.setBeweis(rs.getString("beweis"));
+            }
+        } catch (SQLException e) {
+            Bungeesystem.logger().log(Level.WARNING, "could not fetch ban data from database", e);
+        }
     }
 
     public DataSource getSource() {
@@ -206,6 +239,59 @@ public class Ban {
                 if ((all.hasPermission("bungeecord.informations") || all.hasPermission("bungeecord.*")) || all.getName().equalsIgnoreCase(getVonName()))
                     all.sendMessage(tc);
             }
+        }, Bungeesystem.getPlugin().EXECUTOR_SERVICE);
+    }
+
+    public CompletableFuture<Boolean> isBanned() {
+        return CompletableFuture.supplyAsync(() -> {
+            try (Connection conn = getSource().getConnection();
+                 PreparedStatement ps = conn.prepareStatement("SELECT Ban,Timestamp,Bis FROM bannedPlayers WHERE TargetUUID = ?")) {
+                ps.setString(1, getTargetUUID().toString());
+                ResultSet rs = ps.executeQuery();
+                if (!rs.next())
+                    return false;
+
+                boolean banned = false;
+                long bis = -1;
+                while (rs.next()) {
+                    banned = rs.getBoolean("Ban");
+                    bis = rs.getLong("Bis");
+                }
+                if (bis == -1) {
+                    return true;
+                }
+                if (System.currentTimeMillis() > bis) {
+                    //this.unban(false, "PLUGIN");
+                    return false;
+                }
+                return banned;
+            } catch (SQLException e) {
+                Bungeesystem.logger().log(Level.WARNING, "could not check if player is banned", e);
+            }
+            return false;
+        }, Bungeesystem.getPlugin().EXECUTOR_SERVICE);
+    }
+
+    public CompletableFuture<Integer> getBanCount(String grund, boolean reason) {
+        return CompletableFuture.supplyAsync(() -> {
+            try (Connection conn = getSource().getConnection();
+                 PreparedStatement ps = conn.prepareStatement("SELECT * FROM history WHERE TargetUUID = ? AND Type = ?")) {
+                ps.setString(1, this.getTargetUUID().toString());
+                ps.setString(2, "ban");
+                ResultSet rs = ps.executeQuery();
+                int anzahl = 0;
+                while (rs.next()) {
+                    if (reason) {
+                        if (rs.getString("Grund").equalsIgnoreCase(grund))
+                            anzahl++;
+                    } else
+                        anzahl++;
+                }
+                return anzahl;
+            } catch (SQLException e) {
+                Bungeesystem.logger().log(Level.WARNING, "cloud not count how many bans a user have", e);
+            }
+            return -1;
         }, Bungeesystem.getPlugin().EXECUTOR_SERVICE);
     }
 }
