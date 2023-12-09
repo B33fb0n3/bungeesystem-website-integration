@@ -242,6 +242,66 @@ public class Ban {
         }, Bungeesystem.getPlugin().EXECUTOR_SERVICE);
     }
 
+    public CompletableFuture<Boolean> unban(boolean msg, String name) {
+        return CompletableFuture.supplyAsync(() -> {
+            try (Connection conn = getSource().getConnection(); PreparedStatement ps = conn.prepareStatement("DELETE FROM bannedPlayers WHERE TargetUUID = ?")) {
+                ps.setString(1, getTargetUUID().toString());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                Bungeesystem.logger().log(Level.WARNING, "could not delete player from bannedplayer-Table", e);
+                return false;
+            }
+
+            String message = (Bungeesystem.Prefix + settings.getString("Ban.Unbaninfo").replace("%player%", name).replace("%target%", UUIDFetcher.getName(getTargetUUID()))).replace("&", "§");
+            if (msg) {
+                // NACHRICHT AN CONSOLE
+                Bungeesystem.logger().info(message);
+
+                // TEXTCOMPONENT
+                TextComponent tc = new TextComponent();
+                tc.setText(message + " ");
+                TextComponent tc2 = new TextComponent();
+                tc2.setText(Bungeesystem.other2 + "[" + Bungeesystem.fehler + "MEHR" + Bungeesystem.other2 + "]");
+
+                ArrayList<String> hoverArray = new ArrayList<>();
+
+                int i = 1;
+                while (true) {
+                    try {
+                        String line = ChatColor.translateAlternateColorCodes('&', settings.getString("Ban.Extrainfohover." + i)).replace("%uuid%", this.getTargetUUID().toString()).replace("%name%", this.getVonName()).replace("%reason%", this.getGrund()).replace("%bis%", (this.getPerma() == 1 ? "§4Permanent" : Bungeesystem.formatTime(this.getBis()))).replace("%erstellt%", Bungeesystem.formatTime(this.getErstellt()));
+                        hoverArray.add(line);
+                        if (i > 4) {
+                            break;
+                        }
+                        i++;
+                    } catch (Exception e1) {
+                        break;
+                    }
+                }
+
+                tc2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(String.join("\n", hoverArray))));
+                tc.addExtra(tc2);
+
+                // NACHRICHT AN SPPIELER MIT PERMISSION
+                for (ProxiedPlayer all : ProxyServer.getInstance().getPlayers()) {
+                    if ((all.hasPermission("bungeecord.informations") || all.hasPermission("bungeecord.*")) || all.getName().equalsIgnoreCase(getVonName())) {
+                        all.sendMessage(tc);
+                    }
+                }
+            }
+            try (Connection conn = getSource().getConnection(); PreparedStatement ps = conn.prepareStatement("UPDATE history SET VonEntbannt = ? WHERE TargetUUID = ?  AND Erstellt = ?")) {
+                ps.setString(1, name);
+                ps.setString(2, getTargetUUID().toString());
+                ps.setLong(3, this.getErstellt());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                Bungeesystem.logger().log(Level.WARNING, "cannot update VonEntbannt to new value", e);
+                return false;
+            }
+            return true;
+        }, Bungeesystem.getPlugin().EXECUTOR_SERVICE);
+    }
+
     public CompletableFuture<Boolean> isBanned() {
         return CompletableFuture.supplyAsync(() -> {
             try (Connection conn = getSource().getConnection();

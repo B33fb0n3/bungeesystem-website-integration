@@ -88,7 +88,7 @@ public class Ban extends Command {
                                 sender.sendMessage(new TextComponent(Bungeesystem.Prefix + Bungeesystem.fehler + "Wenn der Spieler gebannt ist bringt ein Mute auch nichts mehr!"));
                                 return;
                             }
-                            // currentBan.unban(false, "PLUGIN"); // todo erstmal //
+                            // currentBan.unban(false, "PLUGIN"); // erstmal //
                             // hier abfragen, ob er den aktuellen Ban verändern will?
                         }
                         DateUnit unit;
