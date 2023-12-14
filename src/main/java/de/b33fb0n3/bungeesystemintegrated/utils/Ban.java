@@ -302,6 +302,31 @@ public class Ban {
         }, Bungeesystem.getPlugin().EXECUTOR_SERVICE);
     }
 
+    public CompletableFuture<Integer> containsIP() {
+        // -1 = nicht gebannt
+        // 0 = muted
+        // 1 = gebannt
+        return CompletableFuture.supplyAsync(() -> {
+            Playerdata playerdata = new Playerdata(this.getTargetUUID());
+            String ip = this.getIp() == null ? playerdata.getLastip() : getIp();
+
+            String[] lastIPSplit = ip.split("\\.");
+            String searchIP = lastIPSplit[0] + "." + lastIPSplit[1] + "." + lastIPSplit[2];
+            try (Connection conn = getSource().getConnection();
+                 PreparedStatement ps = conn.prepareStatement("SELECT Ban FROM bannedPlayers WHERE ip LIKE '%" + searchIP + "%'")) {
+                ResultSet rs = ps.executeQuery();
+                int banned = -1;
+                while (rs.next()) {
+                    banned = rs.getInt("Ban");
+                }
+                return banned;
+            } catch (SQLException e) {
+                Bungeesystem.logger().log(Level.WARNING, "cloud not check if database containsip", e);
+            }
+            return -1;
+        }, Bungeesystem.getPlugin().EXECUTOR_SERVICE);
+    }
+
     public CompletableFuture<Boolean> isBanned() {
         return CompletableFuture.supplyAsync(() -> {
             try (Connection conn = getSource().getConnection();

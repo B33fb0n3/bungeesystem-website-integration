@@ -128,7 +128,7 @@ public final class Bungeesystem extends Plugin {
     }
 
     private void registerListener() {
-        ProxyServer.getInstance().getPluginManager().registerListener(this, new Login(this, dataSource, settings));
+        ProxyServer.getInstance().getPluginManager().registerListener(this, new Login(this, dataSource, settings, standardBans));
     }
 
     private void initMySQL() {
@@ -275,5 +275,9 @@ public final class Bungeesystem extends Plugin {
         getLogger().info("Bungeesystem wurde deaktiviert!");
         getLogger().info("						 ");
         getLogger().info("[]=======================[]");
+    }
+
+    public Updater getUpdater() {
+        return updater;
     }
 }
