@@ -8,8 +8,11 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.config.Configuration;
+import net.md_5.bungee.config.ConfigurationProvider;
+import net.md_5.bungee.config.YamlConfiguration;
 
 import javax.sql.DataSource;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -378,5 +381,63 @@ public class Ban {
             }
             return -1;
         }, Bungeesystem.getPlugin().EXECUTOR_SERVICE);
+    }
+
+    public void banByStandard(int standardID, String ip) {
+        checkID(standardID);
+        String reason = standardBans.getString("BanIDs." + standardID + ".Reason");
+        int time = standardBans.getInt("BanIDs." + standardID + ".Time");
+        String Format = standardBans.getString("BanIDs." + standardID + ".Format");
+        boolean ban = standardBans.getBoolean("BanIDs." + standardID + ".Ban");
+        final boolean[] perma = {standardBans.getBoolean("BanIDs." + standardID + ".Perma")};
+
+        this.setVonName("PLUGIN");
+        this.setGrund(reason);
+        this.setErstellt(System.currentTimeMillis());
+
+        DateUnit unit;
+        try {
+            unit = DateUnit.valueOf((Format).toUpperCase());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            Bungeesystem.logger().log(Level.WARNING, "cannot ban user by default cause of invalid format in standardbans.yml", e);
+            return;
+        }
+        long current = System.currentTimeMillis();
+        this.getBanCount(grund, true).whenComplete((result, ex) -> {
+            int banCount = (result + 1);
+            long millis = 0;
+            double y = 0;
+
+            if (banCount > 3)
+                perma[0] = true;
+            double pow = Math.pow(2, banCount);
+            y = time * pow;
+            if (banCount == 1)
+                y = y - time;
+            millis = Math.round(y * (unit.getToSec() * 1000));
+
+            long unban = current + millis;
+            if (perma[0])
+                unban = -1;
+
+            this.setBis(unban);
+            this.setPerma(perma[0] ? 1 : 0);
+            this.setBan(ban ? 1 : 0);
+            this.setIp(ip);
+            this.setBeweis("/");
+            this.createBan();
+        });
+    }
+
+    private void checkID(int standardID) {
+        String[] reasons = new String[]{"Alt-Account", "Chatverhalten", "Warnungen"};
+        if (!standardBans.get("BanIDs." + standardID + ".Reason").equals(reasons[(standardID - 1)])) {
+            standardBans.set("BanIDs." + standardID + ".Reason", reasons[(standardID - 1)]);
+            try {
+                ConfigurationProvider.getProvider(YamlConfiguration.class).save(standardBans, Bungeesystem.standardBansFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
