@@ -1,6 +1,7 @@
 package de.b33fb0n3.bungeesystemintegrated;
 
 import de.b33fb0n3.bungeesystemintegrated.commands.Ban;
+import de.b33fb0n3.bungeesystemintegrated.commands.BanAdd;
 import de.b33fb0n3.bungeesystemintegrated.listener.Login;
 import de.b33fb0n3.bungeesystemintegrated.utils.ConnectionPoolFactory;
 import de.b33fb0n3.bungeesystemintegrated.utils.Updater;
@@ -125,10 +126,12 @@ public final class Bungeesystem extends Plugin {
 
     private void registerCommands() {
         ProxyServer.getInstance().getPluginManager().registerCommand(this, new Ban("ban"));
+        ProxyServer.getInstance().getPluginManager().registerCommand(this, new BanAdd("banadd"));
     }
 
     private void registerListener() {
         ProxyServer.getInstance().getPluginManager().registerListener(this, new Login(this, dataSource, settings, standardBans));
+        ProxyServer.getInstance().getPluginManager().registerListener(this, new de.b33fb0n3.bungeesystemintegrated.listener.BanAdd(this));
     }
 
     private void initMySQL() {
